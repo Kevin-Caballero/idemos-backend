@@ -4,6 +4,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { InitiativesModule } from './initiatives/initiatives.module';
+import { VotesModule } from './votes/votes.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { InitiativesModule } from './initiatives/initiatives.module';
       },
     ]),
     InitiativesModule,
+    VotesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

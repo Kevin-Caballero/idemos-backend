@@ -1,11 +1,23 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Initiative } from '@idemos/common';
+import {
+  Initiative,
+  InitiativeStep,
+  InitiativeLink,
+  Vote,
+} from '@idemos/common';
 import { InitiativesService } from './initiatives.service';
 import { InitiativesController } from './initiatives.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Initiative])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Initiative,
+      InitiativeStep,
+      InitiativeLink,
+      Vote,
+    ]),
+  ],
   controllers: [InitiativesController],
   providers: [InitiativesService],
 })
