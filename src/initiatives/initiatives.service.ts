@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Initiative, Vote } from '@idemos/common';
+import { Initiative, InitiativeSummary, Vote } from '@idemos/common';
 import { FindInitiativesDto } from './dto/find-initiatives.dto';
 
 export interface PaginatedInitiatives {
@@ -20,6 +20,8 @@ export class InitiativesService {
     private readonly repo: Repository<Initiative>,
     @InjectRepository(Vote)
     private readonly voteRepo: Repository<Vote>,
+    @InjectRepository(InitiativeSummary)
+    private readonly summaryRepo: Repository<InitiativeSummary>,
   ) {}
 
   async findAll(dto: FindInitiativesDto): Promise<PaginatedInitiatives> {
@@ -120,11 +122,18 @@ export class InitiativesService {
     return { data: enriched, total, page, limit };
   }
 
-  async findOne(id: string): Promise<Initiative | null> {
-    return this.repo.findOne({
+  async findOne(
+    id: string,
+  ): Promise<(Initiative & { summary: InitiativeSummary | null }) | null> {
+    const initiative = await this.repo.findOne({
       where: { id },
       relations: { steps: true, links: true },
       order: { steps: { orderIndex: 'ASC' } },
     });
+    if (!initiative) return null;
+    const summary = await this.summaryRepo.findOne({
+      where: { initiativeId: id },
+    });
+    return { ...initiative, summary: summary ?? null };
   }
 }

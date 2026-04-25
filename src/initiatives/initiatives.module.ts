@@ -4,6 +4,7 @@ import {
   Initiative,
   InitiativeStep,
   InitiativeLink,
+  InitiativeSummary,
   Vote,
 } from '@idemos/common';
 import { InitiativesService } from './initiatives.service';
@@ -15,6 +16,7 @@ import { InitiativesController } from './initiatives.controller';
       Initiative,
       InitiativeStep,
       InitiativeLink,
+      InitiativeSummary,
       Vote,
     ]),
   ],
