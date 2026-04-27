@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { InitiativesModule } from './initiatives/initiatives.module';
 import { VotesModule } from './votes/votes.module';
+import { FollowsModule } from './follows/follows.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { VotesModule } from './votes/votes.module';
     ]),
     InitiativesModule,
     VotesModule,
+    FollowsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
