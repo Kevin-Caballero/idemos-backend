@@ -107,6 +107,122 @@ describe('InitiativesService', () => {
       expect(result.total).toBe(2);
       expect(result.data).toHaveLength(2);
     });
+
+    it('applies search filter on title, author and expediente when q is provided', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[mockInitiative], 1]);
+
+      await service.findAll({ q: 'presupuestos' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.title ILIKE :q'),
+        expect.objectContaining({ q: '%presupuestos%' }),
+      );
+    });
+
+    it('trims whitespace from q before building ILIKE pattern', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '  ley  ' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ q: '%ley%' }),
+      );
+    });
+
+    it('does not apply search filter when q is empty string', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '' });
+
+      expect(mockQb.where).not.toHaveBeenCalled();
+    });
+
+    it('combines type and q filters with AND', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[mockInitiative], 1]);
+
+      await service.findAll({ type: InitiativeType.Proyecto, q: 'ley' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.type = :type'),
+        expect.objectContaining({ type: InitiativeType.Proyecto, q: '%ley%' }),
+      );
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.title ILIKE :q'),
+        expect.any(Object),
+      );
+    });
+
+    it('applies single status ILIKE filter when status is provided', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[mockInitiative], 1]);
+
+      await service.findAll({ status: 'aprobad' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.currentStatus ILIKE :s0'),
+        expect.objectContaining({ s0: '%aprobad%' }),
+      );
+    });
+
+    it('applies multiple status ILIKE OR conditions for comma-separated status', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[mockInitiative], 1]);
+
+      await service.findAll({ status: 'aprobad,rechazad' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.currentStatus ILIKE :s0'),
+        expect.objectContaining({ s0: '%aprobad%', s1: '%rechazad%' }),
+      );
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.currentStatus ILIKE :s1'),
+        expect.any(Object),
+      );
+    });
+
+    it('applies dateFrom condition when valid ISO date is provided', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ dateFrom: '2024-01-01' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.presentedAt >= :dateFrom'),
+        expect.objectContaining({ dateFrom: new Date('2024-01-01') }),
+      );
+    });
+
+    it('applies dateTo condition when valid ISO date is provided', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ dateTo: '2024-12-31' });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringContaining('i.presentedAt <= :dateTo'),
+        expect.objectContaining({ dateTo: new Date('2024-12-31') }),
+      );
+    });
+
+    it('combines q, status, and date filters with AND', async () => {
+      mockQb.getManyAndCount.mockResolvedValue([[mockInitiative], 1]);
+
+      await service.findAll({
+        q: 'presupuesto',
+        status: 'aprobad',
+        dateFrom: '2024-01-01',
+        dateTo: '2024-12-31',
+      });
+
+      expect(mockQb.where).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /i\.title ILIKE :q.*i\.currentStatus ILIKE :s0.*i\.presentedAt >= :dateFrom.*i\.presentedAt <= :dateTo/s,
+        ),
+        expect.objectContaining({
+          q: '%presupuesto%',
+          s0: '%aprobad%',
+          dateFrom: new Date('2024-01-01'),
+          dateTo: new Date('2024-12-31'),
+        }),
+      );
+    });
   });
 
   describe('findOne', () => {
