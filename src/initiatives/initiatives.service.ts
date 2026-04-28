@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Initiative } from '@idemos/common';
+import { Initiative, InitiativeSummary, Vote } from '@idemos/common';
 import { FindInitiativesDto } from './dto/find-initiatives.dto';
 
 export interface PaginatedInitiatives {
-  data: Initiative[];
+  data: (Initiative & { votedChoice: string | null })[];
   total: number;
   page: number;
   limit: number;
@@ -18,6 +18,10 @@ export class InitiativesService {
   constructor(
     @InjectRepository(Initiative)
     private readonly repo: Repository<Initiative>,
+    @InjectRepository(Vote)
+    private readonly voteRepo: Repository<Vote>,
+    @InjectRepository(InitiativeSummary)
+    private readonly summaryRepo: Repository<InitiativeSummary>,
   ) {}
 
   async findAll(dto: FindInitiativesDto): Promise<PaginatedInitiatives> {
@@ -33,6 +37,16 @@ export class InitiativesService {
 
     const conditions: string[] = [];
     const params: Record<string, unknown> = {};
+
+    // Filter to only initiatives the user has voted on
+    if (dto.votedOnly && dto.userId) {
+      qb.innerJoin(
+        'votes',
+        'uv',
+        'uv.initiative_id = i.id AND uv.user_id = :votedUserId',
+        { votedUserId: dto.userId },
+      );
+    }
 
     if (dto.type) {
       conditions.push('i.type = :type');
@@ -82,14 +96,44 @@ export class InitiativesService {
 
     const [data, total] = await qb.getManyAndCount();
 
+    // Enrich with user's vote if userId was provided
+    let voteMap = new Map<string, string>();
+    if (dto.userId && data.length > 0) {
+      const votes = await this.voteRepo
+        .createQueryBuilder('v')
+        .select(['v.initiativeId', 'v.choice'])
+        .where('v.initiativeId IN (:...ids) AND v.userId = :userId', {
+          ids: data.map((d) => d.id),
+          userId: dto.userId,
+        })
+        .getMany();
+      voteMap = new Map(votes.map((v) => [v.initiativeId, v.choice]));
+    }
+
+    const enriched = data.map((d) => ({
+      ...d,
+      votedChoice: (voteMap.get(d.id) as string) ?? null,
+    }));
+
     this.logger.log(
       `[findAll] page=${page} limit=${limit} type=${dto.type ?? 'all'} → ${data.length}/${total}`,
     );
 
-    return { data, total, page, limit };
+    return { data: enriched, total, page, limit };
   }
 
-  async findOne(id: string): Promise<Initiative | null> {
-    return this.repo.findOneBy({ id });
+  async findOne(
+    id: string,
+  ): Promise<(Initiative & { summary: InitiativeSummary | null }) | null> {
+    const initiative = await this.repo.findOne({
+      where: { id },
+      relations: { steps: true, links: true },
+      order: { steps: { orderIndex: 'ASC' } },
+    });
+    if (!initiative) return null;
+    const summary = await this.summaryRepo.findOne({
+      where: { initiativeId: id },
+    });
+    return { ...initiative, summary: summary ?? null };
   }
 }
