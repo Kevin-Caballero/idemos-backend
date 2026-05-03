@@ -3,6 +3,10 @@ import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { VotesService } from './votes.service';
 import type { CastVoteDto } from './dto/cast-vote.dto';
 
+/**
+ * Controlador RPC del microservicio backend para el sistema de votación.
+ * Expone los patrones `votes.cast`, `votes.getByUser` y `votes.getStats`.
+ */
 @Controller()
 export class VotesController {
   private readonly logger = new Logger(VotesController.name);

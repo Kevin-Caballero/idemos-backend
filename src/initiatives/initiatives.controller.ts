@@ -3,6 +3,11 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { InitiativesService } from './initiatives.service';
 import { FindInitiativesDto } from './dto/find-initiatives.dto';
 
+/**
+ * Controlador RPC del microservicio backend para iniciativas.
+ * Escucha los message patterns `initiatives.findAll` e `initiatives.findOne`
+ * y delega la lógica en InitiativesService.
+ */
 @Controller()
 export class InitiativesController {
   private readonly logger = new Logger(InitiativesController.name);

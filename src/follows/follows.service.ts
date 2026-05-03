@@ -17,6 +17,12 @@ export interface FollowedInitiative {
   followedAt: Date;
 }
 
+/**
+ * Servicio que gestiona el seguimiento de iniciativas por parte del usuario.
+ * El método `toggle` actúa como interruptor: si ya existe la relación la elimina,
+ * si no existe la crea. Esto simplifica la lógica del cliente, que solo necesita
+ * llamar a un único endpoint independientemente del estado actual.
+ */
 @Injectable()
 export class FollowsService {
   private readonly logger = new Logger(FollowsService.name);

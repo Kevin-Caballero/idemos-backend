@@ -2,6 +2,10 @@ import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FollowsService } from './follows.service';
 
+/**
+ * Controlador RPC del microservicio backend para el sistema de seguimiento.
+ * Expone los patrones `follows.toggle`, `follows.isFollowing` y `follows.getByUser`.
+ */
 @Controller()
 export class FollowsController {
   private readonly logger = new Logger(FollowsController.name);

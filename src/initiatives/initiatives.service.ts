@@ -4,6 +4,11 @@ import { Repository } from 'typeorm';
 import { Initiative, InitiativeSummary, Vote } from '@idemos/common';
 import { FindInitiativesDto } from './dto/find-initiatives.dto';
 
+/**
+ * Resultado paginado de la consulta de iniciativas.
+ * Incluye la elección de voto del usuario autenticado (`votedChoice`) para
+ * que el cliente pueda resaltar la opción ya seleccionada sin una segunda llamada.
+ */
 export interface PaginatedInitiatives {
   data: (Initiative & { votedChoice: string | null })[];
   total: number;
@@ -11,6 +16,14 @@ export interface PaginatedInitiatives {
   limit: number;
 }
 
+/**
+ * Servicio de consulta de iniciativas parlamentarias.
+ * Soporta filtrado dinámico (tipo, texto libre, estado, rango de fechas, votedOnly)
+ * y paginación. Los filtros se construyen como condiciones ILIKE para flexibilidad
+ * en búsquedas parciales sin necesidad de un motor de búsqueda externo.
+ * Enriquece cada resultado con el voto del usuario autenticado en una única consulta
+ * adicional para evitar N+1.
+ */
 @Injectable()
 export class InitiativesService {
   private readonly logger = new Logger(InitiativesService.name);

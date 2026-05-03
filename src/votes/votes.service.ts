@@ -4,6 +4,13 @@ import { Repository } from 'typeorm';
 import { Vote, VoteChoice, OfficialVoteResult } from '@idemos/common';
 import { CastVoteDto, VoteStats } from './dto/cast-vote.dto';
 
+/**
+ * Servicio de votación ciudadana sobre iniciativas parlamentarias.
+ * `castVote` implementa una lógica upsert: si el usuario ya votó la iniciativa
+ * actualiza su elección en lugar de crear un registro duplicado.
+ * `getStats` combina los votos ciudadanos agregados con el resultado oficial
+ * del Congreso (si existe) para ofrecer una vista comparativa al cliente.
+ */
 @Injectable()
 export class VotesService {
   private readonly logger = new Logger(VotesService.name);
