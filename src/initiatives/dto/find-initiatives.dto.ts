@@ -22,6 +22,12 @@ export class FindInitiativesDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   votedOnly?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  hasOfficialVote?: boolean;
+
   @IsOptional()
   @IsString()
   @MaxLength(200)

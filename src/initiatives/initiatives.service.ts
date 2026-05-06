@@ -61,6 +61,11 @@ export class InitiativesService {
       );
     }
 
+    // Filter to only initiatives with an official parliamentary vote
+    if (dto.hasOfficialVote) {
+      qb.innerJoin('official_vote_results', 'ovr', 'ovr.initiative_id = i.id');
+    }
+
     if (dto.type) {
       conditions.push('i.type = :type');
       params.type = dto.type;
